@@ -25,9 +25,6 @@ Coordinates=10,146,108,58
 [dtNascimento]
 Coordinates=156,78,93,58
 
-[edtSaldo]
-Coordinates=220,10,65,58
-
 [Panel1]
 Coordinates=295,10,55,58
 
@@ -35,7 +32,7 @@ Coordinates=295,10,55,58
 Coordinates=10,78,136,58
 
 []
-Coordinates=433,78,91,36
+Coordinates=220,10,65,58
 
 [btnMostrarPessoas]
 Coordinates=69,10,59,58

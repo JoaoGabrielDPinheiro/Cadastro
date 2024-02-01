@@ -1,0 +1,11 @@
+{
+	"name": "boss instal https://github.com/viniciussanchez/dataset-serialize.git",
+	"description": "teste",
+	"version": "1",
+	"homepage": "teste",
+	"mainsrc": "c/Desktop",
+	"projects": [],
+	"dependencies": {
+		"github.com/viniciussanchez/dataset-serialize": "^v2.5.6"
+	}
+}

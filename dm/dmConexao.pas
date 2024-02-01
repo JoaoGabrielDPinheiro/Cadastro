@@ -22,9 +22,12 @@ type
   procedure setInserirFb();
   procedure setInserirFbSQLL();
   procedure setExcluir(pessoaid: integer);
+  procedure setLimparMemoria();
 
   function getMemoria(Pessoa: TPessoa): TFDQuery;
   function getPessoas(Pessoa: TPessoa): TDataSource;
+  function FormatDateTimeTo(const ADateTime: TDateTime): string;
+  function getUltimoId(id: integer): integer;
     { Public declarations }
   end;
 
@@ -38,9 +41,16 @@ implementation
 {$R *.dfm}
 
 procedure TFDmConexao.DataModuleCreate(Sender: TObject);
+var
+  FDQuery: TFDQuery;
 begin
   FDConFB.Connected    := True;
   FDConSLite.Connected := True;
+end;
+
+function TFDmConexao.FormatDateTimeTo(const ADateTime: TDateTime): string;
+begin
+  Result := FormatDateTime('dd.mm.yyyy', ADateTime);
 end;
 
 function TFDmConexao.getMemoria(Pessoa: TPessoa): TFDQuery;
@@ -64,18 +74,66 @@ function TFDmConexao.getPessoas(Pessoa: TPessoa): TDataSource;
 var
   FQuery: TFDQuery;
   ds: TDataSource;
+  VSql: string;
 begin
   FQuery := TFDQuery.Create(nil);
   ds     := TDataSource.Create(nil);
 
   FQuery.Connection := FDConSLite;
-  FQuery.SQL.Text  :=
-  'select id, cast(nome as varchar(50)) as nome, datanascimento, saldodevedor from pessoa';
+  VSql :=
+  'select id, cast(nome as varchar(50)) as nome, datanascimento, saldodevedor from pessoa ';
+
+  if pessoa.id <> 0 then
+     VSql := VSql + 'where id = '''+Pessoa.id.ToString+''' ';
+
+  VSql := VSql + 'order by id';
+  FQuery.SQL.Text  := VSql;
   FQuery.Open;
 
   ds.DataSet := FQuery;
 
   Result := ds;
+end;
+
+function TFDmConexao.getUltimoId(id: integer): integer;
+var
+  FQuery: TFDQuery;
+  SQuery: TFDQuery;
+  I: integer;
+begin
+  try
+    FQuery := TFDQuery.Create(nil);
+    SQuery := TFDQuery.Create(nil);
+
+    FQuery.Connection := FDConFB;
+    SQuery.Connection := FDConFB;
+
+    FQuery.SQL.Text :=
+    'select pes_id from pessoa';
+    FQuery.Open;
+
+    for I := 0 to FQuery.RecordCount - 1 do
+    begin
+      SQuery.Close;
+      SQuery.SQL.Text :=
+       'select pes_id from pessoa where pes_id = '''+id.ToString+''' ';
+      SQuery.Open;
+
+      if sQuery.IsEmpty then
+        break;
+
+      inc(id);
+
+      FQuery.Next;
+    end;
+
+    Result := id;
+  finally
+    SQuery.Close;
+    FQuery.Close;
+    FreeAndNil(SQuery);
+    FreeAndNil(FQuery);
+  end;
 end;
 
 procedure TFDmConexao.setExcluir(pessoaid: integer);
@@ -116,9 +174,9 @@ begin
       'INSERT INTO PESSOA                                                   '+
       '(PES_ID, PES_NOME, PES_DATANASCIMENTO, PES_SALDODEVEDOR)             '+
       'VALUES(:PES_ID, :PES_NOME, :PES_DATANASCIMENTO, :PES_SALDODEVEDOR);  ';
-      FQuery.ParamByName('PES_ID').AsInteger              := SQuery.FieldByName('id').AsInteger;
+      FQuery.ParamByName('PES_ID').AsInteger              := getUltimoId(SQuery.FieldByName('id').AsInteger);
       FQuery.ParamByName('PES_NOME').AsString             := SQuery.FieldByName('nome').AsString;
-      FQuery.ParamByName('PES_DATANASCIMENTO').AsString   := SQuery.FieldByName('datanascimento').AsString;
+      FQuery.ParamByName('PES_DATANASCIMENTO').AsString   := FormatDateTimeTo(SQuery.FieldByName('datanascimento').AsDateTime);
       FQuery.ParamByName('PES_SALDODEVEDOR').AsCurrency   := SQuery.FieldByName('saldodevedor').AsCurrency;
       FQuery.ExecSQL;
 
@@ -145,7 +203,8 @@ begin
     FQuery.Connection := FDConFB;
     SQuery.Connection := FDConSLite;
 
-    FQuery.Open('select * from pessoa');
+    FQuery.SQL.Text := 'select * from pessoa';
+    FQuery.Open;
 
     if FQuery.IsEmpty then
     begin
@@ -158,10 +217,11 @@ begin
 
     for I := 0 to FQuery.RecordCount - 1 do
     begin
-      FQuery.SQL.Text :=
+      SQuery.SQL.Text :=
       'INSERT INTO PESSOA                                   '+
       '(id, nome, datanascimento, saldodevedor)             '+
       'VALUES(:id, :nome, :datanascimento, :saldodevedor);  ';
+
       SQuery.ParamByName('id').AsInteger              := FQuery.FieldByName('PES_ID').AsInteger;
       SQuery.ParamByName('nome').AsString             := FQuery.FieldByName('PES_NOME').AsString;
       SQuery.ParamByName('datanascimento').AsString   := FQuery.FieldByName('PES_DATANASCIMENTO').AsString;
@@ -188,10 +248,11 @@ begin
     FQuery.Connection := FDConSLite;
 
     FQuery.SQL.Text :=
-    'INSERT INTO pessoa                              '+
-    '(nome, datanascimento, saldodevedor)            '+
-    'VALUES(:nome, :datanascimento, :saldodevedor);  ';
+    'INSERT INTO pessoa                                  '+
+    '(id, nome, datanascimento, saldodevedor)            '+
+    'VALUES(:id, :nome, :datanascimento, :saldodevedor);  ';
 
+    FQuery.ParamByName('id').Asinteger              := Pessoa.id;
     FQuery.ParamByName('nome').AsString             := Pessoa.nome;
     FQuery.ParamByName('datanascimento').AsString   := DateToStr(Pessoa.datanascimento);
     FQuery.ParamByName('saldodevedor').AsCurrency   := Pessoa.saldoDevedor;
@@ -201,6 +262,17 @@ begin
     FreeAndNil(FQuery);
     ShowMessage('Executado com Sucesso!');
   end;
+end;
+
+procedure TFDmConexao.setLimparMemoria;
+begin
+  var FDQuery        := TFDQuery.Create(nil);
+  FDQuery.Connection :=  FDConSLite;
+
+  FDQuery.SQL.Text := 'Delete from pessoa';
+  FDQuery.ExecSQL;
+
+  FreeAndNil(FDQuery);
 end;
 
 end.

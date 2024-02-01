@@ -1,0 +1,6 @@
+CREATE TABLE pessoa (
+	id INTEGER,
+	nome varchar,
+	datanascimento varchar,
+	saldodevedor REAL
+);

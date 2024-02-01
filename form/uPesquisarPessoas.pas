@@ -14,20 +14,19 @@ type
   TfrmPesquisar = class(TForm)
     dbgPessoas: TDBGrid;
     Panel1: TPanel;
-    edtNome: TEdit;
-    lblNome: TLabel;
     Panel2: TPanel;
     btnFechar: TButton;
     edtCodigo: TEdit;
     lblCodigo: TLabel;
-    dtNascimento: TDateTimePicker;
-    lbldata: TLabel;
-    Image1: TImage;
     GroupBox1: TGroupBox;
+    btnPesquisar: TButton;
     procedure FormShow(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure btnFecharClick(Sender: TObject);
-    procedure Image1Click(Sender: TObject);
+    procedure dbgPessoasDrawColumnCell(Sender: TObject; const Rect: TRect;
+      DataCol: Integer; Column: TColumn; State: TGridDrawState);
+    procedure btnPesquisarClick(Sender: TObject);
+    procedure edtCodigoKeyPress(Sender: TObject; var Key: Char);
   private
   dmConexao: TFDmConexao;
   Pessoa: TPessoa;
@@ -49,30 +48,54 @@ begin
   Close;
 end;
 
+procedure TfrmPesquisar.btnPesquisarClick(Sender: TObject);
+begin
+  if edtCodigo.Text = '' then
+     edtCodigo.Text := '0';
+  Pessoa.id             := StrToInt(edtCodigo.Text);
+  dbgPessoas.DataSource := dmConexao.getPessoas(Pessoa);
+  ControleButtons;
+end;
+
 procedure TfrmPesquisar.ControleButtons;
 begin
-  edtNome.Text      := '';
   edtCodigo.Text    := '';
-  dtNascimento.Date := now;
+end;
+
+procedure TfrmPesquisar.dbgPessoasDrawColumnCell(Sender: TObject;
+  const Rect: TRect; DataCol: Integer; Column: TColumn; State: TGridDrawState);
+var
+  sTexto: string;
+  Valor: Currency;
+begin
+
+  if (Column.Field.FieldName = 'saldodevedor')  and
+  (dbgPessoas.DataSource.DataSet.FieldByName('saldodevedor').AsString <> '' ) then
+  begin
+    Valor  := dbgPessoas.DataSource.DataSet.FieldByName('saldodevedor').AsCurrency;
+    sTexto := FormatFloat('###,###,##0.00', Valor);
+
+    dbgPessoas.Canvas.FillRect(Rect);
+    dbgPessoas.Canvas.TextOut(Rect.Left + 2, Rect.Top + 2, sTexto);
+  end;
+end;
+
+procedure TfrmPesquisar.edtCodigoKeyPress(Sender: TObject; var Key: Char);
+begin
+  if not (Key in ['0'..'9', #8]) then
+  begin
+    Key := #0;
+  end;
 end;
 
 procedure TfrmPesquisar.FormCreate(Sender: TObject);
 begin
   dmConexao := TFDmConexao.Create(nil);
+  Pessoa    := TPessoa.Create;
 end;
 
 procedure TfrmPesquisar.FormShow(Sender: TObject);
 begin
-  dbgPessoas.DataSource := dmConexao.getPessoas(Pessoa);
-  dtNascimento.Date := Now;
-  ControleButtons;
-end;
-
-procedure TfrmPesquisar.Image1Click(Sender: TObject);
-begin
-  Pessoa.nome           := edtNome.Text;
-  Pessoa.id             := StrToInt(edtCodigo.Text);
-  Pessoa.datanascimento := dtNascimento.Date;
   dbgPessoas.DataSource := dmConexao.getPessoas(Pessoa);
   ControleButtons;
 end;

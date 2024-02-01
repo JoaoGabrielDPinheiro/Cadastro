@@ -22,8 +22,6 @@ object frmCadastroPessoas: TfrmCadastroPessoas
     Height = 396
     Align = alClient
     TabOrder = 0
-    ExplicitLeft = 64
-    ExplicitTop = -8
     object Panel1: TPanel
       Left = 1
       Top = 1
@@ -118,6 +116,7 @@ object frmCadastroPessoas: TfrmCadastroPessoas
             Width = 294
             Height = 33
             Caption = 'Mostrar Pessoas em Mem'#243'ria'
+            Enabled = False
             Font.Charset = DEFAULT_CHARSET
             Font.Color = clWindowText
             Font.Height = -15
@@ -223,22 +222,15 @@ object frmCadastroPessoas: TfrmCadastroPessoas
             ParentFont = False
             TabOrder = 2
           end
-          object edtSaldo: TMaskEdit
-            Left = 421
-            Top = 46
-            Width = 119
-            Height = 28
-            EditMask = 'R$ 999,99;0'
-            Font.Charset = DEFAULT_CHARSET
-            Font.Color = clWindowText
-            Font.Height = -15
-            Font.Name = 'Segoe UI'
-            Font.Style = []
-            MaxLength = 9
-            ParentFont = False
-            TabOrder = 3
-            Text = ''
-          end
+        end
+        object ceSaldo: TCurrencyEdit
+          Left = 443
+          Top = 67
+          Width = 121
+          Height = 23
+          TabOrder = 2
+          Text = '0,00'
+          FormatMask = '###,##0.00'
         end
       end
       object TabSheet2: TTabSheet
@@ -266,13 +258,42 @@ object frmCadastroPessoas: TfrmCadastroPessoas
         end
         object btnBuscar: TButton
           Left = 48
-          Top = 11
+          Top = 16
           Width = 97
           Height = 34
           Caption = 'Buscar'
           TabOrder = 1
+          OnClick = btnBuscarClick
         end
       end
+    end
+  end
+  object NetHTTPClient1: TNetHTTPClient
+    UserAgent = 'Embarcadero URI Client/1.0'
+    Left = 653
+    Top = 46
+  end
+  object FDMemTable1: TFDMemTable
+    FetchOptions.AssignedValues = [evMode]
+    FetchOptions.Mode = fmAll
+    ResourceOptions.AssignedValues = [rvSilentMode]
+    ResourceOptions.SilentMode = True
+    UpdateOptions.AssignedValues = [uvCheckRequired, uvAutoCommitUpdates]
+    UpdateOptions.CheckRequired = False
+    UpdateOptions.AutoCommitUpdates = True
+    Left = 749
+    Top = 86
+    object FDMemTable1codigo: TStringField
+      FieldName = 'codigo'
+    end
+    object FDMemTable1nome: TStringField
+      FieldName = 'nome'
+    end
+    object FDMemTable1preco: TCurrencyField
+      FieldName = 'preco'
+    end
+    object FDMemTable1caracteristicas: TArrayField
+      FieldName = 'caracteristicas'
     end
   end
 end
